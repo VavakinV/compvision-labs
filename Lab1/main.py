@@ -1,4 +1,5 @@
 import cv2 as cv
+import numpy as np
 
 def task2():
     # Чтение изображений различных форматов и с различными флагами
@@ -202,4 +203,47 @@ def task9():
     cap.release()
 cv.destroyAllWindows()
 
-task9()
+
+def pentagram():
+    cap = cv.VideoCapture(0)
+    cv.namedWindow("Webcam", cv.WINDOW_AUTOSIZE)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        h, w = frame.shape[:2]
+        cx, cy = w // 2, h // 2
+
+        b, g, r = frame[cy, cx]
+        if r >= g and r >= b:
+            color = (0, 0, 255)
+        elif g >= r and g >= b:
+            color = (0, 255, 0)
+        else:
+            color = (255, 0, 0)
+
+        radius_big = 80
+        radius_small = 25
+
+        points = [0]*10
+        for i in range(5):
+            points[i*2] = [cx+int(np.sin(np.deg2rad(72*i))*radius_big), cy+int(np.cos(np.deg2rad(72*i))*radius_big)]
+
+        for i in range(5):
+            points[1 + i*2] = [cx+int(np.sin(np.deg2rad(144 + 72*i))*radius_small), cy+int(np.cos(np.deg2rad(144 + 72*i))*radius_small)]
+
+        points = np.array(points, np.int32)
+
+        cv.polylines(frame, [points], True, color, 4)
+
+        cv.imshow("Webcam", frame)
+
+        if cv.waitKey(1) & 0xFF == 27:
+            break
+
+    cap.release()
+    cv.destroyAllWindows()
+
+pentagram()
