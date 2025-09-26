@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 
 cap = cv.VideoCapture(0)
-kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
+kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (10, 10))
 
 while True:
     ret, frame = cap.read()
@@ -50,8 +50,7 @@ while True:
                    cv.FONT_HERSHEY_SIMPLEX,
                    1,
                    (0, 255, 0),
-                   2)
-
+                   2)        
     cv.imshow("Red Tracker", output_frame)
 
     key = cv.waitKey(1)
