@@ -4,6 +4,8 @@ import numpy as np
 cap = cv.VideoCapture(0)
 kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (10, 10))
 
+trajectory = []
+
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -27,31 +29,28 @@ while True:
     mask = cv.dilate(mask, kernel, iterations=1)
     mask = cv.erode(mask, kernel, iterations=1)
 
-    output_frame = frame.copy()
+    moments = cv.moments(mask)
 
-    contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    area = moments['m00']
+    y_coords, x_coords = np.where(mask > 0)
 
-    if contours:
-        largest_contour = max(contours, key=cv.contourArea)
-        x, y, w, h = cv.boundingRect(largest_contour)
+    if area != 0:
+        cx = int(moments['m10'] / area)
+        cy = int(moments['m01'] / area)
+        cv.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
 
-        cv.rectangle(output_frame, (x, y), (x + w, y + h), (0, 0, 0), 2)
+        x_min, x_max = min(x_coords), max(x_coords)
+        y_min, y_max = min(y_coords), max(y_coords)
 
-        moments = cv.moments(largest_contour)
-        if moments['m00'] != 0:
-            cx = int(moments['m10'] / moments['m00'])
-            cy = int(moments['m01'] / moments['m00'])
-            cv.circle(output_frame, (cx, cy), 5, (0, 255, 0), -1)
+        cv.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 0, 0), 2)
 
-        area = int(cv.contourArea(largest_contour))
-        cv.putText(output_frame,
-                   f"Area: {area} px",
-                   (10, 30),
-                   cv.FONT_HERSHEY_SIMPLEX,
-                   1,
-                   (0, 255, 0),
-                   2)        
-    cv.imshow("Red Tracker", output_frame)
+        trajectory.append([cx, cy])
+        if len(trajectory) > 60:
+            trajectory = trajectory[1:]
+
+    trajectory_formatted = np.array(trajectory, np.int32)
+    cv.polylines(frame, [trajectory_formatted], False, (0, 0, 255), 4)
+    cv.imshow("Red Tracker", frame)
 
     key = cv.waitKey(1)
     if key & 0xFF == 27:
