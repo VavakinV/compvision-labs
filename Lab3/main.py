@@ -1,8 +1,6 @@
 import cv2 as cv
 import numpy as np
 
-cap = cv.VideoCapture(0)
-
 # Пункт 1.
 # Параметры ядра свёртки
 KERNEL_SIZE = 5
@@ -29,7 +27,7 @@ kernel7 = get_kernel(7, BLUR_PARAMETER)
 # print(f"РАЗМЕР 7x7:\n{kernel7}")
 
 # Пункт 2.
-# Нормирование матрицы (сумма элементов должна бстремиться к 1)
+# Нормирование матрицы (сумма элементов должна стремиться к 1)
 kernel3 = kernel3 / kernel3.sum()
 kernel5 = kernel5 / kernel5.sum()
 kernel7 = kernel7 / kernel7.sum()
@@ -38,18 +36,40 @@ kernel7 = kernel7 / kernel7.sum()
 # print(f"Нормированная матрица размера 5x5:\n{kernel5}\nСумма элементов: {kernel5.sum()}")
 # print(f"Нормированная матрица размера 7x7:\n{kernel7}\nСумма элементов: {kernel7.sum()}")
 
-# Пункт 3.
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    grayscale_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    cv.imshow("Video", grayscale_frame)
-
-    key = cv.waitKey(1)
-    if key & 0xFF == 27:
-        break
-
+# Пункт 3, 4, 5
+cap = cv.VideoCapture(0)
+ret, frame = cap.read()
 cap.release()
-cv.destroyAllWindows()
+
+grayscale_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+
+cv.imwrite("Lab3/output_images/original_gray.png", grayscale_frame)
+
+kernel_sizes = [3, 7]
+blur_params = [2, 20]
+
+for ks in kernel_sizes:
+    for bp in blur_params:
+        kernel = get_kernel(ks, bp)
+        kernel = kernel / kernel.sum()
+
+        h, w = grayscale_frame.shape
+        pad = ks // 2
+
+        padded = cv.copyMakeBorder(grayscale_frame, pad, pad, pad, pad, cv.BORDER_REFLECT)
+
+        blurred_frame = np.zeros_like(grayscale_frame, dtype=float)
+        for i in range(h):
+            for j in range(w):
+                region = padded[i:i + ks, j:j + ks]
+                value = np.sum(region * kernel)
+                blurred_frame[i, j] = value
+
+        blurred_frame = np.clip(blurred_frame, 0, 255).astype(np.uint8)
+        filename = f"Lab3/output_images/blur_k{ks}_b{bp}.png"
+        cv.imwrite(filename, blurred_frame)
+
+        blurred_cv = cv.GaussianBlur(grayscale_frame, (ks, ks), bp)
+        cv_filename = f"Lab3/output_images/blur_cv_k{ks}_b{bp}.png"
+        cv.imwrite(cv_filename, blurred_cv)
+
