@@ -37,9 +37,7 @@ kernel7 = kernel7 / kernel7.sum()
 # print(f"Нормированная матрица размера 7x7:\n{kernel7}\nСумма элементов: {kernel7.sum()}")
 
 # Пункт 3, 4, 5
-cap = cv.VideoCapture(0)
-ret, frame = cap.read()
-cap.release()
+frame = cv.imread("Lab3/input.png")
 
 grayscale_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
@@ -51,7 +49,7 @@ blur_params = [2, 20]
 for ks in kernel_sizes:
     for bp in blur_params:
         kernel = get_kernel(ks, bp)
-        kernel = kernel / kernel.sum()
+        kernel = kernel / kernel.sum()  
 
         h, w = grayscale_frame.shape
         pad = ks // 2
@@ -73,3 +71,8 @@ for ks in kernel_sizes:
         cv_filename = f"Lab3/output_images/blur_cv_k{ks}_b{bp}.png"
         cv.imwrite(cv_filename, blurred_cv)
 
+        diff = np.abs(blurred_frame.astype(np.float32) - blurred_cv.astype(np.float32))
+        mean_diff = np.mean(diff)
+        relative_mean = (mean_diff / np.mean(blurred_cv.astype(np.float32))) * 100
+
+        print(f"Относительная погрешность между ручным и OpenCV-размытием с параметрами {ks}x{ks} и {bp}: {relative_mean:.2f}%")
